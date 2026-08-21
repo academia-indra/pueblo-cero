@@ -5,64 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Pueblo Cero — prototipo</title>
 <style>
-  :root {
-    --centro: #e8d9a0;
-    --papel: #f2ece0;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overflow: hidden; background: #0d0f10; }
+  :root { --centro: #e8d9a0; --papel: #f2ece0 }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent }
+  html, body { height: 100%; overflow: hidden; background: #0d0f10 }
   body {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    color: var(--papel);
-    touch-action: none;
-    overscroll-behavior: none;
+    color: var(--papel); touch-action: none; overscroll-behavior: none;
   }
   canvas { display: block }
 
   #estado {
     position: fixed; top: env(safe-area-inset-top, 0); left: 0; right: 0;
-    padding: 12px 18px;
-    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 12px 18px; display: flex; justify-content: space-between; align-items: baseline;
     font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
-    text-shadow: 0 1px 3px rgba(0,0,0,.85);
-    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,.85); pointer-events: none;
   }
   #plata { opacity: .7 }
 
   #aviso {
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: calc(22px + env(safe-area-inset-bottom, 0));
-    background: rgba(15,13,10,.9);
-    border: 1px solid rgba(242,236,224,.25);
+    background: rgba(15,13,10,.9); border: 1px solid rgba(242,236,224,.25);
     padding: 10px 16px; border-radius: 4px;
     font-size: 12px; letter-spacing: .03em; line-height: 1.5;
-    opacity: 0; transition: opacity .18s ease;
-    text-align: center; max-width: 60vw;
+    opacity: 0; transition: opacity .18s ease; text-align: center; max-width: 60vw;
   }
   #aviso.visible { opacity: 1 }
   #aviso b { color: var(--centro); font-weight: 600 }
 
-  #base, #puno {
-    position: fixed; border-radius: 50%; pointer-events: none;
-    opacity: 0; transition: opacity .15s ease;
-  }
+  #base, #puno { position: fixed; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .15s ease }
   #base { width: 112px; height: 112px; border: 2px solid rgba(242,236,224,.28) }
   #puno { width: 48px; height: 48px; background: rgba(242,236,224,.82) }
   #base.on, #puno.on { opacity: 1 }
 
-  /* Portada. Existe por una razón técnica, no estética: bloquear la pantalla
-     en horizontal y entrar a pantalla completa sólo se permite como respuesta
-     a un toque de la persona. Sin este botón, el navegador lo rechaza. */
   #portada {
-    position: fixed; inset: 0; z-index: 10;
-    background: #10131a;
+    position: fixed; inset: 0; z-index: 10; background: #10131a;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 26px; text-align: center; padding: 24px;
   }
-  #portada h1 {
-    font-size: clamp(30px, 7vw, 52px); font-weight: 700;
-    letter-spacing: .16em; text-transform: uppercase;
-  }
+  #portada h1 { font-size: clamp(30px, 7vw, 52px); font-weight: 700; letter-spacing: .16em; text-transform: uppercase }
   #portada p { font-size: 13px; opacity: .6; line-height: 1.8; letter-spacing: .04em }
   #jugar {
     font: inherit; font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
@@ -73,13 +54,11 @@
   #portada.oculta { display: none }
 
   #girar {
-    position: fixed; inset: 0; z-index: 9;
-    background: #10131a; display: none;
+    position: fixed; inset: 0; z-index: 9; background: #10131a; display: none;
     flex-direction: column; align-items: center; justify-content: center;
     gap: 18px; text-align: center; padding: 24px;
     font-size: 14px; letter-spacing: .06em; line-height: 1.7;
   }
-  /* Sólo se muestra si el teléfono quedó vertical pese al bloqueo. */
   @media (orientation: portrait) and (max-width: 900px) {
     body.jugando #girar { display: flex }
   }
@@ -87,11 +66,7 @@
 </head>
 <body>
 
-<div id="estado">
-  <span id="lugar">Pueblo Cero</span>
-  <span id="plata">$0</span>
-</div>
-
+<div id="estado"><span id="lugar">Pueblo Cero</span><span id="plata">$0</span></div>
 <div id="aviso"></div>
 <div id="base"></div>
 <div id="puno"></div>
@@ -103,10 +78,7 @@
 
 <div id="portada">
   <h1>Pueblo Cero</h1>
-  <p>
-    Izquierda: caminar<br>
-    Derecha: mirar alrededor
-  </p>
+  <p>Izquierda: caminar<br>Derecha: mirar alrededor</p>
   <button id="jugar">Entrar</button>
 </div>
 
@@ -115,22 +87,25 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    PUEBLO CERO — prototipo
 
-   Cámara en tercera persona con vista libre, como en Minecraft:
+   Vegetación y terreno.
 
-     - La mitad DERECHA de la pantalla gira la cámara. Sólo ella. Se puede
-       mirar al cielo, al piso y dar la vuelta completa.
-     - La mitad IZQUIERDA mueve al muñeco. Si vas para atrás, el muñeco gira
-       su cuerpo y camina para atrás, pero la cámara NO se mueve.
+   El objetivo era acercarse a un árbol de verdad —tronco que se afina, copa
+   frondosa, tonos mezclados— sin descargar modelos ni texturas. Cada árbol se
+   genera con dos formas: un tronco cónico y un racimo de bultos irregulares
+   como copa. Con suficientes bultos y algo de azar en el tamaño, el color y
+   la posición, deja de parecer geometría y empieza a parecer follaje.
 
-   Esa separación es la diferencia entre una cámara que sigue y una cámara que
-   uno maneja. En la versión anterior la cámara se acomodaba sola detrás del
-   muñeco, así que era imposible caminar mirando hacia otro lado.
+   El costo de eso son muchísimos objetos, y ahí está el truco que hace que
+   corra en un teléfono: en vez de un objeto por bulto, se usa un `InstancedMesh`
+   por tono de verde. Sesenta árboles con doce bultos cada uno son ~720 piezas,
+   pero la tarjeta gráfica sólo recibe una orden por tono. Sin eso, el teléfono
+   se arrastraría.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const escena = new THREE.Scene();
-escena.fog = new THREE.Fog(0x9fb4c7, 45, 120);
+escena.fog = new THREE.Fog(0x8fa8bd, 55, 150);
 
-const camara = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 400);
+const camara = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 420);
 
 const render = new THREE.WebGLRenderer({ antialias: true });
 render.setSize(innerWidth, innerHeight);
@@ -139,79 +114,171 @@ render.shadowMap.enabled = true;
 render.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(render.domElement);
 
-/* ── Cielo ─────────────────────────────────────────────────────────────────
-   Ahora que se puede mirar hacia arriba, el cielo dejó de ser un color de
-   fondo y pasó a ser algo que se mira. Una cúpula con degradado y nubes de
-   cajas: barato, y evita que mirar arriba sea un vacío plano. */
+/* ── Azar repetible ───────────────────────────────────────────────────────
+   Con Math.random() el bosque cambiaría en cada carga y sería imposible decir
+   "ese árbol de allá quedó mal". Con semilla, el mundo es siempre el mismo. */
+let semilla = 20260821;
+function azar() {
+  semilla = (semilla * 1103515245 + 12345) & 0x7fffffff;
+  return semilla / 0x7fffffff;
+}
+function entre(a, b) { return a + azar() * (b - a); }
+
+/* ── Relieve ──────────────────────────────────────────────────────────────
+   Ondulado suave con sumas de senos. Dentro del pueblo el terreno es plano:
+   si el Centro y los lotes quedaran sobre lomas, los edificios flotarían o se
+   enterrarían, y arreglarlo cuesta más de lo que aporta. */
+const RADIO_PUEBLO = 36;
+
+const LAGUNAS = [
+  { x: -58, z: 22, r: 17 },
+  { x: 48, z: -52, r: 14 }
+];
+const NIVEL_AGUA = -1.15;
+
+function alturaEn(x, z) {
+  const d = Math.hypot(x, z);
+  if (d < RADIO_PUEBLO) return 0;
+
+  let h = Math.sin(x * 0.045) * 1.5 + Math.cos(z * 0.038) * 1.7
+        + Math.sin((x + z) * 0.021) * 2.4;
+
+  // Las lagunas son hoyos: el terreno baja hacia el centro de cada una y el
+  // agua es un plano fijo. Así la orilla aparece sola donde el terreno cruza
+  // el nivel del agua, en vez de tener que dibujarla.
+  for (let i = 0; i < LAGUNAS.length; i++) {
+    const l = LAGUNAS[i];
+    const dl = Math.hypot(x - l.x, z - l.z);
+    if (dl < l.r) {
+      const t = 1 - dl / l.r;
+      h -= (t * t) * 5.5;
+    }
+  }
+
+  // Transición suave desde el pueblo plano hacia el relieve.
+  const mezcla = Math.min((d - RADIO_PUEBLO) / 14, 1);
+  return h * mezcla * mezcla;
+}
+
+/* ── Cielo ─────────────────────────────────────────────────────────────── */
 const cielo = new THREE.Mesh(
   new THREE.SphereGeometry(200, 24, 16),
   new THREE.ShaderMaterial({
-    side: THREE.BackSide,
-    depthWrite: false,
+    side: THREE.BackSide, depthWrite: false,
     uniforms: {
-      arriba: { value: new THREE.Color(0x4a7fb5) },
-      abajo:  { value: new THREE.Color(0xc4d6e4) }
+      arriba: { value: new THREE.Color(0x3f76ae) },
+      abajo:  { value: new THREE.Color(0xbdd2e2) }
     },
     vertexShader:
       'varying float h;' +
-      'void main() {' +
-      '  h = normalize(position).y;' +
-      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);' +
-      '}',
+      'void main(){ h = normalize(position).y;' +
+      'gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     fragmentShader:
       'uniform vec3 arriba; uniform vec3 abajo; varying float h;' +
-      'void main() {' +
-      '  gl_FragColor = vec4(mix(abajo, arriba, clamp(h * 1.4, 0.0, 1.0)), 1.0);' +
-      '}'
+      'void main(){ gl_FragColor = vec4(mix(abajo, arriba, clamp(h*1.4,0.0,1.0)),1.0); }'
   })
 );
 escena.add(cielo);
 
-for (let i = 0; i < 22; i++) {
-  const a = Math.random() * Math.PI * 2;
-  const r = 60 + Math.random() * 90;
+for (let i = 0; i < 20; i++) {
+  const a = azar() * Math.PI * 2, r = 70 + azar() * 90;
   const nube = new THREE.Group();
-  const n = 3 + Math.floor(Math.random() * 3);
+  const n = 3 + Math.floor(azar() * 3);
   for (let j = 0; j < n; j++) {
     const c = new THREE.Mesh(
-      new THREE.BoxGeometry(9 + Math.random() * 12, 3.5, 7 + Math.random() * 8),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.82 })
+      new THREE.BoxGeometry(9 + azar() * 12, 3.5, 7 + azar() * 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
     );
-    c.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 12);
+    c.position.set((azar() - 0.5) * 16, (azar() - 0.5) * 2, (azar() - 0.5) * 12);
     nube.add(c);
   }
-  nube.position.set(Math.cos(a) * r, 42 + Math.random() * 26, Math.sin(a) * r);
+  nube.position.set(Math.cos(a) * r, 46 + azar() * 26, Math.sin(a) * r);
   escena.add(nube);
 }
 
 /* ── Luz ───────────────────────────────────────────────────────────────── */
-escena.add(new THREE.HemisphereLight(0xbfd4e6, 0x6b5a3e, 0.85));
-const sol = new THREE.DirectionalLight(0xfff0d4, 0.95);
-sol.position.set(-28, 34, 18);
+escena.add(new THREE.HemisphereLight(0xa8c4dc, 0x3d4a2a, 0.72));
+const sol = new THREE.DirectionalLight(0xfff4dd, 1.0);
+sol.position.set(-34, 44, 22);
 sol.castShadow = true;
 sol.shadow.mapSize.set(2048, 2048);
-sol.shadow.camera.left = -60; sol.shadow.camera.right = 60;
-sol.shadow.camera.top = 60; sol.shadow.camera.bottom = -60;
+sol.shadow.camera.left = -70; sol.shadow.camera.right = 70;
+sol.shadow.camera.top = 70; sol.shadow.camera.bottom = -70;
+sol.shadow.bias = -0.0009;
 escena.add(sol);
 
-/* ── Suelo ─────────────────────────────────────────────────────────────── */
+/* ── Suelo ────────────────────────────────────────────────────────────────
+   Un plano subdividido, desplazado por el relieve y pintado vértice por
+   vértice. El color por vértice es lo que saca al pasto de ser una alfombra
+   verde: manchones más oscuros, tierra en las orillas de las lagunas y en los
+   caminos del pueblo. */
+const LADO = 240, DIV = 150;
+const geoSuelo = new THREE.PlaneGeometry(LADO, LADO, DIV, DIV);
+geoSuelo.rotateX(-Math.PI / 2);
+
+const pos = geoSuelo.attributes.position;
+const colores = new Float32Array(pos.count * 3);
+
+const PASTO_OSCURO = new THREE.Color(0x2f4420);
+const PASTO_MEDIO  = new THREE.Color(0x466b28);
+const PASTO_CLARO  = new THREE.Color(0x5f8434);
+const TIERRA       = new THREE.Color(0x6b5334);
+const ARENA        = new THREE.Color(0x8c7a52);
+
+const c = new THREE.Color();
+for (let i = 0; i < pos.count; i++) {
+  const x = pos.getX(i), z = pos.getZ(i);
+  const y = alturaEn(x, z);
+  pos.setY(i, y);
+
+  // Manchones: dos ondas de distinta frecuencia mezclan los tres verdes.
+  const mancha = (Math.sin(x * 0.19) * Math.cos(z * 0.23) + Math.sin((x + z) * 0.08)) * 0.5 + 0.5;
+  c.copy(PASTO_OSCURO).lerp(PASTO_MEDIO, Math.min(mancha * 1.4, 1));
+  if (mancha > 0.72) c.lerp(PASTO_CLARO, (mancha - 0.72) * 2.6);
+
+  // Orilla: donde el terreno se acerca al nivel del agua, arena.
+  if (y < NIVEL_AGUA + 1.3) {
+    c.lerp(ARENA, Math.min((NIVEL_AGUA + 1.3 - y) / 1.6, 0.85));
+  }
+
+  // Tierra pisada alrededor del Centro.
+  const d = Math.hypot(x, z);
+  if (d < 15.5) c.lerp(TIERRA, 0.9);
+  else if (d < 18) c.lerp(TIERRA, (18 - d) / 2.5 * 0.9);
+
+  colores[i * 3] = c.r; colores[i * 3 + 1] = c.g; colores[i * 3 + 2] = c.b;
+}
+geoSuelo.setAttribute('color', new THREE.BufferAttribute(colores, 3));
+geoSuelo.computeVertexNormals();
+
 const suelo = new THREE.Mesh(
-  new THREE.PlaneGeometry(260, 260),
-  new THREE.MeshLambertMaterial({ color: 0x6f8a4e })
+  geoSuelo,
+  new THREE.MeshLambertMaterial({ vertexColors: true })
 );
-suelo.rotation.x = -Math.PI / 2;
 suelo.receiveShadow = true;
 escena.add(suelo);
 
-const plaza = new THREE.Mesh(
-  new THREE.CircleGeometry(15, 40),
-  new THREE.MeshLambertMaterial({ color: 0x8a7a5f })
-);
-plaza.rotation.x = -Math.PI / 2;
-plaza.position.y = 0.02;
-plaza.receiveShadow = true;
-escena.add(plaza);
+/* ── Agua ─────────────────────────────────────────────────────────────────
+   Un disco translúcido por laguna, que sube y baja apenas. No es una
+   simulación: es lo justo para que el ojo lea "esto está vivo" y no "acá hay
+   un vidrio azul". */
+const aguas = [];
+for (let i = 0; i < LAGUNAS.length; i++) {
+  const l = LAGUNAS[i];
+  const agua = new THREE.Mesh(
+    new THREE.CircleGeometry(l.r + 1.5, 40),
+    new THREE.MeshLambertMaterial({
+      color: 0x2d6b7a, transparent: true, opacity: 0.82,
+      emissive: 0x0a2630
+    })
+  );
+  agua.rotation.x = -Math.PI / 2;
+  agua.position.set(l.x, NIVEL_AGUA, l.z);
+  escena.add(agua);
+  aguas.push(agua);
+}
 
+/* ── Edificios ─────────────────────────────────────────────────────────── */
 function caja(ancho, alto, largo, color, x, y, z) {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(ancho, alto, largo),
@@ -223,7 +290,6 @@ function caja(ancho, alto, largo, color, x, y, z) {
   return m;
 }
 
-/* ── El Centro ─────────────────────────────────────────────────────────── */
 caja(11, 5.5, 11, 0xe8d9a0, 0, 0, 0);
 caja(12.5, 0.7, 12.5, 0xb4543c, 0, 5.5, 0);
 caja(2.4, 3.4, 0.4, 0x4a3a26, 0, 0, 5.6);
@@ -231,7 +297,6 @@ caja(2.4, 3.4, 0.4, 0x4a3a26, 0, 0, 5.6);
 caja(0.35, 9, 0.35, 0xd8cdb4, 0, 6.2, -4.2);
 caja(2.6, 1.5, 0.15, 0xb4543c, 1.4, 13.4, -4.2);
 
-/* ── Lotes vacíos ──────────────────────────────────────────────────────── */
 const LOTES = [];
 for (let i = 0; i < 8; i++) {
   const a = (i / 8) * Math.PI * 2;
@@ -239,38 +304,212 @@ for (let i = 0; i < 8; i++) {
 
   const piso = new THREE.Mesh(
     new THREE.PlaneGeometry(11, 11),
-    new THREE.MeshLambertMaterial({ color: 0x7d6b50 })
+    new THREE.MeshLambertMaterial({ color: 0x6f5a3c })
   );
   piso.rotation.x = -Math.PI / 2;
-  piso.position.set(x, 0.03, z);
+  piso.position.set(x, 0.04, z);
   piso.receiveShadow = true;
   escena.add(piso);
 
-  const esquinas = [[-5, -5], [5, -5], [-5, 5], [5, 5]];
-  for (let e = 0; e < esquinas.length; e++) {
-    caja(0.3, 1.3, 0.3, 0x5c4a30, x + esquinas[e][0], 0, z + esquinas[e][1]);
-  }
+  const esq = [[-5, -5], [5, -5], [-5, 5], [5, 5]];
+  for (let e = 0; e < esq.length; e++) caja(0.3, 1.3, 0.3, 0x4a3a26, x + esq[e][0], 0, z + esq[e][1]);
   LOTES.push({ x: x, z: z, nombre: 'Lote ' + (i + 1) });
 
   const camino = new THREE.Mesh(
     new THREE.PlaneGeometry(2.4, 14),
-    new THREE.MeshLambertMaterial({ color: 0x9c8c6e })
+    new THREE.MeshLambertMaterial({ color: 0x7d6a4a })
   );
   camino.rotation.x = -Math.PI / 2;
   camino.rotation.z = -a;
-  camino.position.set(Math.cos(a) * 20, 0.025, Math.sin(a) * 20);
+  camino.position.set(Math.cos(a) * 20, 0.03, Math.sin(a) * 20);
   camino.receiveShadow = true;
   escena.add(camino);
 }
 
-/* ── Árboles ───────────────────────────────────────────────────────────── */
-for (let i = 0; i < 48; i++) {
-  const a = Math.random() * Math.PI * 2;
-  const r = 42 + Math.random() * 50;
-  const x = Math.cos(a) * r, z = Math.sin(a) * r;
-  caja(0.9, 3.4, 0.9, 0x5b432a, x, 0, z);
-  caja(3.4, 3.4, 3.4, 0x4a6b32 + Math.floor(Math.random() * 0x0a1005), x, 3.2, z);
+/* ═══════════════════════════════════════════════════════════════════════════
+   ÁRBOLES
+
+   Dos especies y seis tonos de verde, mezclados. Cada árbol elige un tono
+   base y cada bulto de su copa se desvía un poco de ese tono: así ningún
+   árbol es de un solo color plano, que es lo que delata a la geometría.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const VERDES = [
+  0x1e3d16,  // muy oscuro, casi pino
+  0x2c5220,  // oscuro
+  0x3d6b26,  // medio
+  0x548c2f,  // claro
+  0x77a33a,  // amarillento
+  0x94b444   // amarillo verdoso
+];
+
+const geoBulto = new THREE.IcosahedronGeometry(1, 0);
+const geoTronco = new THREE.CylinderGeometry(0.42, 0.72, 1, 7);
+const geoPino = new THREE.ConeGeometry(1, 1, 8);
+
+// Se recolecta todo primero y se crea la geometría después: hay que saber
+// cuántas piezas de cada tono hay antes de reservar el espacio.
+const bultosPorTono = [];
+for (let i = 0; i < VERDES.length; i++) bultosPorTono.push([]);
+const troncos = [];
+
+function prohibido(x, z) {
+  const d = Math.hypot(x, z);
+  if (d < 34) return true;                        // pueblo y lotes
+  for (let i = 0; i < LAGUNAS.length; i++) {
+    const l = LAGUNAS[i];
+    if (Math.hypot(x - l.x, z - l.z) < l.r + 3) return true;   // dentro del agua
+  }
+  return false;
 }
+
+function arbolFrondoso(x, z, y, escala) {
+  const alto = entre(5.5, 9) * escala;
+  const grosor = entre(0.5, 0.8) * escala;
+  troncos.push({ x: x, y: y, z: z, alto: alto, grosor: grosor, color: 0x4a3524 });
+
+  const tono = Math.floor(entre(1, VERDES.length));
+  const radioCopa = entre(2.2, 3.4) * escala;
+  const centroCopa = y + alto * 0.86;
+  const cuantos = 9 + Math.floor(azar() * 5);
+
+  for (let i = 0; i < cuantos; i++) {
+    // Distribución achatada: más ancha que alta, como una copa real.
+    const ang = azar() * Math.PI * 2;
+    const rr = Math.pow(azar(), 0.6) * radioCopa;
+    const bx = x + Math.cos(ang) * rr;
+    const bz = z + Math.sin(ang) * rr;
+    const by = centroCopa + (azar() - 0.35) * radioCopa * 0.85;
+    const r = entre(0.85, 1.5) * escala * (1 - rr / (radioCopa * 2.4));
+
+    // Cada bulto se corre un tono respecto del árbol: eso es lo que evita el
+    // verde plano y hace que se lea como hojas y no como una pelota.
+    let t = tono + (azar() < 0.5 ? -1 : 1) * (azar() < 0.45 ? 1 : 0);
+    t = Math.max(0, Math.min(VERDES.length - 1, t));
+    bultosPorTono[t].push({ x: bx, y: by, z: bz, r: Math.max(r, 0.5) });
+  }
+}
+
+function pino(x, z, y, escala) {
+  const alto = entre(7, 12) * escala;
+  troncos.push({ x: x, y: y, z: z, alto: alto * 0.42, grosor: entre(0.34, 0.5) * escala, color: 0x3d2b1c });
+
+  const tono = Math.floor(entre(0, 3));   // los pinos van en los verdes oscuros
+  const capas = 4 + Math.floor(azar() * 3);
+  for (let i = 0; i < capas; i++) {
+    const t = i / capas;
+    const r = (1 - t) * entre(2.0, 2.8) * escala + 0.55;
+    const h = alto * 0.30;
+    const cy = y + alto * 0.32 + t * alto * 0.62;
+    const tt = Math.max(0, Math.min(VERDES.length - 1, tono + (azar() < 0.3 ? 1 : 0)));
+    bultosPorTono[tt].push({ x: x, y: cy + h / 2, z: z, r: r, cono: true, alto: h });
+  }
+}
+
+let plantados = 0, intentos = 0;
+while (plantados < 130 && intentos < 3000) {
+  intentos++;
+  const a = azar() * Math.PI * 2;
+  const r = 34 + Math.pow(azar(), 0.7) * 78;
+  const x = Math.cos(a) * r, z = Math.sin(a) * r;
+  if (prohibido(x, z)) continue;
+
+  const y = alturaEn(x, z);
+  if (y < NIVEL_AGUA + 0.4) continue;      // no plantar dentro del agua
+
+  // Alturas mezcladas: la mayoría medianos, algunos muy grandes y varios
+  // chicos. Un bosque donde todos los árboles miden lo mismo se ve fabricado.
+  const dado = azar();
+  const escala = dado < 0.18 ? entre(0.45, 0.7)
+               : dado < 0.82 ? entre(0.8, 1.15)
+                             : entre(1.3, 1.75);
+
+  if (azar() < 0.34) pino(x, z, y, escala);
+  else arbolFrondoso(x, z, y, escala);
+  plantados++;
+}
+
+/* ── Volcar a InstancedMesh ───────────────────────────────────────────────
+   Acá está la diferencia entre que corra a 60 cuadros o a 8: en vez de un
+   objeto por bulto, una sola orden de dibujo por tono. */
+const aux = new THREE.Object3D();
+
+for (let t = 0; t < VERDES.length; t++) {
+  const lista = bultosPorTono[t];
+  if (!lista.length) continue;
+
+  const esferas = lista.filter(function (b) { return !b.cono; });
+  const conos = lista.filter(function (b) { return b.cono; });
+
+  if (esferas.length) {
+    const im = new THREE.InstancedMesh(
+      geoBulto, new THREE.MeshLambertMaterial({ color: VERDES[t], flatShading: true }), esferas.length
+    );
+    im.castShadow = true; im.receiveShadow = true;
+    for (let i = 0; i < esferas.length; i++) {
+      const b = esferas[i];
+      aux.position.set(b.x, b.y, b.z);
+      // Achatado y girado al azar: dos bultos con el mismo tamaño y la misma
+      // orientación se notan como copias enseguida.
+      aux.scale.set(b.r * entre(0.95, 1.25), b.r * entre(0.7, 0.95), b.r * entre(0.95, 1.25));
+      aux.rotation.set(azar() * 3, azar() * 3, azar() * 3);
+      aux.updateMatrix();
+      im.setMatrixAt(i, aux.matrix);
+    }
+    escena.add(im);
+  }
+
+  if (conos.length) {
+    const im = new THREE.InstancedMesh(
+      geoPino, new THREE.MeshLambertMaterial({ color: VERDES[t], flatShading: true }), conos.length
+    );
+    im.castShadow = true; im.receiveShadow = true;
+    for (let i = 0; i < conos.length; i++) {
+      const b = conos[i];
+      aux.position.set(b.x, b.y, b.z);
+      aux.scale.set(b.r, b.alto, b.r);
+      aux.rotation.set(0, azar() * 3, 0);
+      aux.updateMatrix();
+      im.setMatrixAt(i, aux.matrix);
+    }
+    escena.add(im);
+  }
+}
+
+const imTronco = new THREE.InstancedMesh(
+  geoTronco, new THREE.MeshLambertMaterial({ color: 0x4a3524, flatShading: true }), troncos.length
+);
+imTronco.castShadow = true; imTronco.receiveShadow = true;
+for (let i = 0; i < troncos.length; i++) {
+  const t = troncos[i];
+  aux.position.set(t.x, t.y + t.alto / 2, t.z);
+  aux.scale.set(t.grosor, t.alto, t.grosor);
+  // Inclinación mínima: ningún árbol crece perfectamente a plomo.
+  aux.rotation.set(entre(-0.05, 0.05), azar() * 3, entre(-0.05, 0.05));
+  aux.updateMatrix();
+  imTronco.setMatrixAt(i, aux.matrix);
+}
+escena.add(imTronco);
+
+/* ── Arbustos y piedras, para llenar el piso ───────────────────────────── */
+const matArbusto = new THREE.MeshLambertMaterial({ color: 0x35561f, flatShading: true });
+const imArbusto = new THREE.InstancedMesh(geoBulto, matArbusto, 150);
+imArbusto.castShadow = true; imArbusto.receiveShadow = true;
+let na = 0;
+while (na < 150) {
+  const a = azar() * Math.PI * 2, r = 30 + azar() * 85;
+  const x = Math.cos(a) * r, z = Math.sin(a) * r;
+  if (Math.hypot(x, z) < 32) continue;
+  const y = alturaEn(x, z);
+  if (y < NIVEL_AGUA + 0.3) continue;
+  aux.position.set(x, y + 0.35, z);
+  aux.scale.set(entre(0.5, 1.1), entre(0.35, 0.6), entre(0.5, 1.1));
+  aux.rotation.set(0, azar() * 3, 0);
+  aux.updateMatrix();
+  imArbusto.setMatrixAt(na, aux.matrix);
+  na++;
+}
+escena.add(imArbusto);
 
 /* ── El muñeco ─────────────────────────────────────────────────────────── */
 const jugador = new THREE.Group();
@@ -295,32 +534,17 @@ const piernaIzq = parte(0.42, 1.2, 0.42, 0x39424f, -0.3, 0.4, 0);
 const piernaDer = parte(0.42, 1.2, 0.42, 0x39424f, 0.3, 0.4, 0);
 jugador.position.set(0, 0, 16);
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   CÁMARA — orientación libre
-
-   `yaw` gira alrededor, `pitch` mira arriba y abajo. Los dos los maneja
-   únicamente el dedo derecho: caminar no los toca nunca. Esa es toda la
-   diferencia con la versión anterior.
-   ═══════════════════════════════════════════════════════════════════════════ */
-let yaw = Math.PI;      // arranca mirando hacia el Centro
-let pitch = 0.22;
+/* ── Cámara libre ──────────────────────────────────────────────────────── */
+let yaw = Math.PI, pitch = 0.22;
 const DISTANCIA = 9.5;
-
-// Casi vertical, pero nunca del todo: en los polos exactos la cámara pierde
-// la referencia de cuál lado es arriba y da un tirón feo.
-const PITCH_MIN = -1.35;   // mirando al cielo
-const PITCH_MAX = 1.35;    // mirando al piso
+const PITCH_MIN = -1.35, PITCH_MAX = 1.35;
 
 const base = document.getElementById('base');
 const puno = document.getElementById('puno');
 
-/* Dos dedos a la vez, cada uno con su tarea, identificados por dónde
-   empezaron a tocar. Guardar el identificador de cada uno es lo que permite
-   caminar y mirar al mismo tiempo sin que se pisen. */
 let dedoMover = null, origenX = 0, origenY = 0, ejeX = 0, ejeY = 0;
 let dedoMirar = null, ultimoX = 0, ultimoY = 0;
-const RADIO = 50;
-const SENSIBILIDAD = 0.0055;
+const RADIO = 50, SENSIBILIDAD = 0.0055;
 
 function esZonaDeMover(x) { return x < innerWidth * 0.5; }
 
@@ -330,14 +554,11 @@ addEventListener('touchstart', function (e) {
     if (esZonaDeMover(t.clientX) && dedoMover === null) {
       dedoMover = t.identifier;
       origenX = t.clientX; origenY = t.clientY;
-      base.style.left = (origenX - 56) + 'px';
-      base.style.top = (origenY - 56) + 'px';
-      puno.style.left = (origenX - 24) + 'px';
-      puno.style.top = (origenY - 24) + 'px';
+      base.style.left = (origenX - 56) + 'px'; base.style.top = (origenY - 56) + 'px';
+      puno.style.left = (origenX - 24) + 'px'; puno.style.top = (origenY - 24) + 'px';
       base.classList.add('on'); puno.classList.add('on');
     } else if (!esZonaDeMover(t.clientX) && dedoMirar === null) {
-      dedoMirar = t.identifier;
-      ultimoX = t.clientX; ultimoY = t.clientY;
+      dedoMirar = t.identifier; ultimoX = t.clientX; ultimoY = t.clientY;
     }
   }
 }, { passive: true });
@@ -374,7 +595,6 @@ function soltar(e) {
 addEventListener('touchend', soltar, { passive: true });
 addEventListener('touchcancel', soltar, { passive: true });
 
-/* ── Controles de computadora ──────────────────────────────────────────── */
 const teclas = {};
 addEventListener('keydown', function (e) { teclas[e.key.toLowerCase()] = true; });
 addEventListener('keyup', function (e) { teclas[e.key.toLowerCase()] = false; });
@@ -393,10 +613,8 @@ addEventListener('mousemove', function (e) {
 });
 
 /* ── Bucle ─────────────────────────────────────────────────────────────── */
-const VELOCIDAD = 7.5;
-const LIMITE = 76;
-let paso = 0;
-let rumbo = Math.PI;          // hacia dónde apunta el cuerpo
+const VELOCIDAD = 7.5, LIMITE = 105;
+let paso = 0, rumbo = Math.PI;
 let relojAnterior = performance.now();
 
 const aviso = document.getElementById('aviso');
@@ -417,9 +635,7 @@ function bucle(ahora) {
   const dt = Math.min((ahora - relojAnterior) / 1000, 0.05);
   relojAnterior = ahora;
 
-  // Entrada: adelante/atrás y costados, en el sistema de la cámara.
-  let adelante = -ejeY;
-  let costado = ejeX;
+  let adelante = -ejeY, costado = ejeX;
   if (teclas['w'] || teclas['arrowup']) adelante += 1;
   if (teclas['s'] || teclas['arrowdown']) adelante -= 1;
   if (teclas['a'] || teclas['arrowleft']) costado -= 1;
@@ -428,9 +644,6 @@ function bucle(ahora) {
   const fuerza = Math.min(Math.hypot(adelante, costado), 1);
 
   if (fuerza > 0.06) {
-    // "Adelante" es hacia donde mira la cámara, no hacia donde apunta el
-    // cuerpo. Por eso ir hacia atrás no arrastra la cámara: sólo cambia la
-    // dirección del movimiento, y el cuerpo gira para acompañarla.
     const frenteX = -Math.sin(yaw), frenteZ = -Math.cos(yaw);
     const derX = -frenteZ, derZ = frenteX;
 
@@ -442,7 +655,6 @@ function bucle(ahora) {
     jugador.position.x += dx * VELOCIDAD * fuerza * dt;
     jugador.position.z += dz * VELOCIDAD * fuerza * dt;
 
-    // El cuerpo gira hacia donde camina, con retraso. La cámara ni se entera.
     const objetivo = Math.atan2(dx, dz);
     let giro = objetivo - rumbo;
     while (giro > Math.PI) giro -= Math.PI * 2;
@@ -458,51 +670,58 @@ function bucle(ahora) {
     piernaDer.rotation.x = balanceo;
     cabeza.position.y = 2.6 + Math.abs(Math.sin(paso)) * 0.045;
   } else {
-    brazoIzq.rotation.x *= 0.85;
-    brazoDer.rotation.x *= 0.85;
-    piernaIzq.rotation.x *= 0.85;
-    piernaDer.rotation.x *= 0.85;
+    brazoIzq.rotation.x *= 0.85; brazoDer.rotation.x *= 0.85;
+    piernaIzq.rotation.x *= 0.85; piernaDer.rotation.x *= 0.85;
   }
 
   jugador.position.x = Math.max(-LIMITE, Math.min(LIMITE, jugador.position.x));
   jugador.position.z = Math.max(-LIMITE, Math.min(LIMITE, jugador.position.z));
 
-  // Cámara en órbita: siempre a la misma distancia, en el ángulo que fijó el
-  // dedo derecho. Se queda quieta mientras el muñeco camina.
+  // Seguir el relieve. Suavizado: sin esto, cada ondulación se sentiría como
+  // un escalón y el muñeco daría saltitos.
+  const sueloAqui = Math.max(alturaEn(jugador.position.x, jugador.position.z), NIVEL_AGUA - 0.35);
+  jugador.position.y += (sueloAqui - jugador.position.y) * Math.min(dt * 9, 1);
+
   const cosP = Math.cos(pitch);
   posCamara.set(
     jugador.position.x + Math.sin(yaw) * cosP * DISTANCIA,
     jugador.position.y + 2.4 + Math.sin(pitch) * DISTANCIA,
     jugador.position.z + Math.cos(yaw) * cosP * DISTANCIA
   );
-  // Nunca por debajo del suelo: mirando muy hacia arriba, la cámara baja
-  // tanto que se enterraría y se vería el mundo desde abajo.
-  if (posCamara.y < 0.8) posCamara.y = 0.8;
+  const pisoCamara = alturaEn(posCamara.x, posCamara.z) + 1.0;
+  if (posCamara.y < pisoCamara) posCamara.y = pisoCamara;
 
   camara.position.lerp(posCamara, Math.min(dt * 14, 1));
   camara.lookAt(jugador.position.x, jugador.position.y + 2.2, jugador.position.z);
-
   cielo.position.copy(camara.position);
+
+  // El agua respira. Un movimiento mínimo alcanza.
+  const t = ahora * 0.0011;
+  for (let i = 0; i < aguas.length; i++) {
+    aguas[i].position.y = NIVEL_AGUA + Math.sin(t + i * 2) * 0.06;
+  }
 
   const dCentro = Math.hypot(jugador.position.x, jugador.position.z);
   if (dCentro < 15) {
     lugar.textContent = 'El Centro · zona segura';
     mostrarAviso(dCentro < 9
-      ? 'Comida y ropa <b>gratis</b>, siempre.<br>Acá nadie te puede robar.'
-      : '');
+      ? 'Comida y ropa <b>gratis</b>, siempre.<br>Acá nadie te puede robar.' : '');
   } else {
     let cerca = null;
     for (let i = 0; i < LOTES.length; i++) {
-      const lote = LOTES[i];
-      if (Math.hypot(jugador.position.x - lote.x, jugador.position.z - lote.z) < 7) {
-        cerca = lote; break;
-      }
+      const l = LOTES[i];
+      if (Math.hypot(jugador.position.x - l.x, jugador.position.z - l.z) < 7) { cerca = l; break; }
     }
     if (cerca) {
       lugar.textContent = cerca.nombre + ' · vacío';
       mostrarAviso('Terreno libre.<br>Acá se podrá <b>construir un negocio</b>.');
     } else {
-      lugar.textContent = 'Pueblo Cero';
+      let enLaguna = false;
+      for (let i = 0; i < LAGUNAS.length; i++) {
+        const l = LAGUNAS[i];
+        if (Math.hypot(jugador.position.x - l.x, jugador.position.z - l.z) < l.r + 2) { enLaguna = true; break; }
+      }
+      lugar.textContent = enLaguna ? 'La laguna' : 'Pueblo Cero';
       mostrarAviso('');
     }
   }
@@ -511,32 +730,19 @@ function bucle(ahora) {
 }
 requestAnimationFrame(bucle);
 
-/* ── Entrar: pantalla completa y horizontal ───────────────────────────────
-   Las dos cosas sólo se permiten como respuesta directa a un toque, así que
-   viven acá y no al cargar la página. Y las dos pueden fallar según el
-   navegador —en iPhone, el bloqueo de orientación no existe— por eso ninguna
-   corta la ejecución: si no se puede, se juega igual y el cartel de "girá el
-   teléfono" se encarga del resto. */
+/* ── Entrar ────────────────────────────────────────────────────────────── */
 document.getElementById('jugar').addEventListener('click', function () {
   document.getElementById('portada').classList.add('oculta');
   document.body.classList.add('jugando');
 
   const raiz = document.documentElement;
-  const pedirPantallaCompleta = raiz.requestFullscreen || raiz.webkitRequestFullscreen;
-  if (pedirPantallaCompleta) {
-    try {
-      const p = pedirPantallaCompleta.call(raiz);
-      if (p && p.catch) p.catch(function () {});
-    } catch (_) {}
+  const pedir = raiz.requestFullscreen || raiz.webkitRequestFullscreen;
+  if (pedir) {
+    try { const p = pedir.call(raiz); if (p && p.catch) p.catch(function () {}); } catch (_) {}
   }
-
   if (screen.orientation && screen.orientation.lock) {
-    try {
-      const p = screen.orientation.lock('landscape');
-      if (p && p.catch) p.catch(function () {});
-    } catch (_) {}
+    try { const p = screen.orientation.lock('landscape'); if (p && p.catch) p.catch(function () {}); } catch (_) {}
   }
-
   setTimeout(ajustar, 200);
 });
 

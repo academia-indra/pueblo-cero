@@ -23,6 +23,13 @@ gira el cuerpo y camina para atrás, pero la vista se queda donde la dejaste.
 El Centro (zona segura, comida y ropa gratis), ocho lotes vacíos alrededor y los
 caminos que los unen.
 
+Alrededor, un bosque generado: árboles frondosos y pinos, en seis tonos de verde
+mezclados entre sí y en alturas muy distintas. El terreno ondula, hay dos lagunas
+con orillas de arena, y el pasto tiene manchones más claros y más oscuros.
+
+Nada de esto usa modelos ni texturas descargadas: todo se genera con formas
+básicas. El bosque es siempre el mismo porque el azar tiene semilla fija.
+
 ## Qué NO hay todavía, a propósito
 
 Economía, elecciones, tesoro, robo y otros jugadores. Todo eso es lógica de
