@@ -1,39 +1,44 @@
-# Pueblo Cero
+# Pueblo Cero — servidor
 
-Prototipo del mundo 3D. Un solo archivo, sin dependencias que instalar:
-Three.js se carga desde un CDN.
+Prototipo multijugador. El servidor sirve el juego y reparte las posiciones de
+quienes están conectados.
 
-## Jugar
+## Probar en tu computadora
 
-Abrí `index.html` en cualquier navegador, o entrá a la dirección de GitHub Pages.
+```bash
+npm install
+npm start
+```
 
-Se juega en **horizontal**. Al tocar «Entrar» se pide pantalla completa y bloqueo
-de orientación; si el navegador no lo permite (iPhone, por ejemplo), aparece un
-cartel pidiendo girar el teléfono.
+Abrí `http://localhost:3000`. Para probar de a dos sin otra persona, abrí una
+segunda pestaña en incógnito.
 
-- **Mitad izquierda:** caminar. La palanca aparece donde ponés el dedo.
-- **Mitad derecha:** girar la cámara. Mirá al cielo, al piso y alrededor.
-- **Computadora:** WASD o flechas para caminar, arrastrar con el ratón para mirar.
+## Subir a Railway
 
-La cámara la manejás sólo vos: caminar no la mueve. Si vas hacia atrás, el muñeco
-gira el cuerpo y camina para atrás, pero la vista se queda donde la dejaste.
+1. Subí esta carpeta a un repositorio de GitHub.
+2. En railway.com: **New Project** → **Deploy from GitHub repo** → elegí el repo.
+3. Railway detecta Node solo y corre `npm start`. No hay variables que cargar:
+   el puerto lo toma de `PORT`, que Railway define por su cuenta.
+4. En **Settings → Networking**, si no hay dominio público, tocá
+   **Generate Domain**.
 
-## Qué hay en este prototipo
+El enlace que te da Railway es el que compartís. Cualquiera lo abre desde el
+celular, sin instalar nada.
 
-El Centro (zona segura, comida y ropa gratis), ocho lotes vacíos alrededor y los
-caminos que los unen.
+Para comprobar que está vivo sin abrir el juego: `TU-DOMINIO/salud`
 
-Alrededor, un bosque generado: árboles frondosos y pinos, en seis tonos de verde
-mezclados entre sí y en alturas muy distintas. El terreno ondula, hay dos lagunas
-con orillas de arena, y el pasto tiene manchones más claros y más oscuros.
+## Probar la lógica del servidor
 
-Nada de esto usa modelos ni texturas descargadas: todo se genera con formas
-básicas. El bosque es siempre el mismo porque el azar tiene semilla fija.
+```bash
+node test-servidor.js
+```
 
-## Qué NO hay todavía, a propósito
+Conecta jugadores falsos y comprueba nombres, topes, entradas, salidas y datos
+basura. No necesita red.
 
-Economía, elecciones, tesoro, robo y otros jugadores. Todo eso es lógica de
-servidor y se construye después.
+## Qué hace y qué no
 
-Este prototipo responde una sola pregunta, que es la que conviene responder antes
-de gastar meses: **¿se siente bien caminar por este pueblo en un teléfono?**
+El servidor **reparte** posiciones: no simula el mundo ni valida el movimiento.
+Para un prototipo entre conocidos alcanza, pero significa que alguien podría
+trucar su posición. Cuando el juego tenga economía y robos, el servidor tiene
+que pasar a decidir él dónde está cada uno.
