@@ -7,8 +7,16 @@ Three.js se carga desde un CDN.
 
 Abrí `index.html` en cualquier navegador, o entrá a la dirección de GitHub Pages.
 
-- **Celular:** arrastrá el dedo en la mitad izquierda de la pantalla para caminar.
-- **Computadora:** WASD o las flechas.
+Se juega en **horizontal**. Al tocar «Entrar» se pide pantalla completa y bloqueo
+de orientación; si el navegador no lo permite (iPhone, por ejemplo), aparece un
+cartel pidiendo girar el teléfono.
+
+- **Mitad izquierda:** caminar. La palanca aparece donde ponés el dedo.
+- **Mitad derecha:** girar la cámara. Mirá al cielo, al piso y alrededor.
+- **Computadora:** WASD o flechas para caminar, arrastrar con el ratón para mirar.
+
+La cámara la manejás sólo vos: caminar no la mueve. Si vas hacia atrás, el muñeco
+gira el cuerpo y camina para atrás, pero la vista se queda donde la dejaste.
 
 ## Qué hay en este prototipo
 

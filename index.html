@@ -5,12 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Pueblo Cero — prototipo</title>
 <style>
-  /* El pueblo empieza vacío: la interfaz también. Nada de paneles, barras ni
-     medidores. Sólo lo imprescindible para caminar y leer dónde estás parado. */
   :root {
-    --tierra: #8a7a5f;
     --centro: #e8d9a0;
-    --tinta: #1b1710;
     --papel: #f2ece0;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -19,103 +15,176 @@
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     color: var(--papel);
     touch-action: none;
+    overscroll-behavior: none;
   }
-  canvas { display: block; }
+  canvas { display: block }
 
-  /* Cartel de estado. Es el único texto permanente y dice sólo dos cosas:
-     dónde estás y cuánto tenés. */
   #estado {
     position: fixed; top: env(safe-area-inset-top, 0); left: 0; right: 0;
-    padding: 14px 16px;
+    padding: 12px 18px;
     display: flex; justify-content: space-between; align-items: baseline;
-    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
-    text-shadow: 0 1px 3px rgba(0,0,0,.8);
+    font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0,0,0,.85);
     pointer-events: none;
   }
-  #lugar { opacity: .95 }
-  #plata { opacity: .75 }
+  #plata { opacity: .7 }
 
-  /* Aviso contextual: aparece sólo cuando hay algo que hacer donde estás
-     parado. Una pantalla vacía es una invitación a caminar, no un error. */
   #aviso {
     position: fixed; left: 50%; transform: translateX(-50%);
-    bottom: calc(150px + env(safe-area-inset-bottom, 0));
+    bottom: calc(22px + env(safe-area-inset-bottom, 0));
     background: rgba(15,13,10,.9);
     border: 1px solid rgba(242,236,224,.25);
-    padding: 12px 18px; border-radius: 4px;
-    font-size: 13px; letter-spacing: .04em;
+    padding: 10px 16px; border-radius: 4px;
+    font-size: 12px; letter-spacing: .03em; line-height: 1.5;
     opacity: 0; transition: opacity .18s ease;
-    text-align: center; max-width: 82vw;
+    text-align: center; max-width: 60vw;
   }
   #aviso.visible { opacity: 1 }
   #aviso b { color: var(--centro); font-weight: 600 }
 
-  /* Palanca táctil. Aparece donde tocás, en la mitad izquierda. */
   #base, #puno {
     position: fixed; border-radius: 50%; pointer-events: none;
     opacity: 0; transition: opacity .15s ease;
   }
-  #base { width: 118px; height: 118px; border: 2px solid rgba(242,236,224,.3) }
-  #puno { width: 52px; height: 52px; background: rgba(242,236,224,.85) }
+  #base { width: 112px; height: 112px; border: 2px solid rgba(242,236,224,.28) }
+  #puno { width: 48px; height: 48px; background: rgba(242,236,224,.82) }
   #base.on, #puno.on { opacity: 1 }
 
-  #ayuda {
-    position: fixed; left: 0; right: 0;
-    bottom: calc(18px + env(safe-area-inset-bottom, 0));
-    text-align: center; font-size: 11px; letter-spacing: .1em;
-    opacity: .4; text-transform: uppercase; pointer-events: none;
+  /* Portada. Existe por una razón técnica, no estética: bloquear la pantalla
+     en horizontal y entrar a pantalla completa sólo se permite como respuesta
+     a un toque de la persona. Sin este botón, el navegador lo rechaza. */
+  #portada {
+    position: fixed; inset: 0; z-index: 10;
+    background: #10131a;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 26px; text-align: center; padding: 24px;
+  }
+  #portada h1 {
+    font-size: clamp(30px, 7vw, 52px); font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase;
+  }
+  #portada p { font-size: 13px; opacity: .6; line-height: 1.8; letter-spacing: .04em }
+  #jugar {
+    font: inherit; font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 16px 44px; border: 1px solid var(--centro);
+    background: transparent; color: var(--centro); border-radius: 3px; cursor: pointer;
+  }
+  #jugar:active { background: var(--centro); color: #10131a }
+  #portada.oculta { display: none }
+
+  #girar {
+    position: fixed; inset: 0; z-index: 9;
+    background: #10131a; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; text-align: center; padding: 24px;
+    font-size: 14px; letter-spacing: .06em; line-height: 1.7;
+  }
+  /* Sólo se muestra si el teléfono quedó vertical pese al bloqueo. */
+  @media (orientation: portrait) and (max-width: 900px) {
+    body.jugando #girar { display: flex }
   }
 </style>
 </head>
 <body>
 
 <div id="estado">
-  <span id="lugar">El Centro</span>
+  <span id="lugar">Pueblo Cero</span>
   <span id="plata">$0</span>
 </div>
 
 <div id="aviso"></div>
 <div id="base"></div>
 <div id="puno"></div>
-<div id="ayuda">Arrastrá para caminar · WASD en compu</div>
+
+<div id="girar">
+  <div style="font-size:40px">&#10227;</div>
+  <div>Girá el teléfono<br>para jugar en horizontal</div>
+</div>
+
+<div id="portada">
+  <h1>Pueblo Cero</h1>
+  <p>
+    Izquierda: caminar<br>
+    Derecha: mirar alrededor
+  </p>
+  <button id="jugar">Entrar</button>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   PUEBLO CERO — prototipo mínimo
+   PUEBLO CERO — prototipo
 
-   Qué hay acá: un mundo 3D por el que se camina, el Centro en el medio, y
-   ocho lotes vacíos alrededor. Nada más.
+   Cámara en tercera persona con vista libre, como en Minecraft:
 
-   Qué NO hay, a propósito: economía, elecciones, robo, otros jugadores. Todo
-   eso es lógica de servidor y se construye después. Esto responde una sola
-   pregunta, que es la que hay que responder primero: ¿se siente bien caminar
-   por este pueblo, en un teléfono?
+     - La mitad DERECHA de la pantalla gira la cámara. Sólo ella. Se puede
+       mirar al cielo, al piso y dar la vuelta completa.
+     - La mitad IZQUIERDA mueve al muñeco. Si vas para atrás, el muñeco gira
+       su cuerpo y camina para atrás, pero la cámara NO se mueve.
 
-   Los lotes vacíos son el argumento visual del juego entero. Un pueblo que
-   arranca con ocho terrenos baldíos alrededor de un comedor gratuito dice
-   solo de qué se trata, sin un tutorial.
+   Esa separación es la diferencia entre una cámara que sigue y una cámara que
+   uno maneja. En la versión anterior la cámara se acomodaba sola detrás del
+   muñeco, así que era imposible caminar mirando hacia otro lado.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const escena = new THREE.Scene();
-escena.background = new THREE.Color(0x9fb4c7);
-escena.fog = new THREE.Fog(0x9fb4c7, 40, 110);
+escena.fog = new THREE.Fog(0x9fb4c7, 45, 120);
 
-const camara = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 300);
+const camara = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 400);
 
 const render = new THREE.WebGLRenderer({ antialias: true });
 render.setSize(innerWidth, innerHeight);
-// Tope de 2: en un teléfono de mucha densidad, renderizar a 3x tira los
-// cuadros por segundo a la mitad sin que se note la diferencia.
 render.setPixelRatio(Math.min(devicePixelRatio, 2));
 render.shadowMap.enabled = true;
 render.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(render.domElement);
 
-/* ── Luz ──────────────────────────────────────────────────────────────────
-   Sol bajo y cálido, en vez de luz cenital. Las sombras largas son lo que
-   le da volumen a un mundo hecho de cajas; con el sol en el cenit, todo se
-   ve plano y de plástico. */
+/* ── Cielo ─────────────────────────────────────────────────────────────────
+   Ahora que se puede mirar hacia arriba, el cielo dejó de ser un color de
+   fondo y pasó a ser algo que se mira. Una cúpula con degradado y nubes de
+   cajas: barato, y evita que mirar arriba sea un vacío plano. */
+const cielo = new THREE.Mesh(
+  new THREE.SphereGeometry(200, 24, 16),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: {
+      arriba: { value: new THREE.Color(0x4a7fb5) },
+      abajo:  { value: new THREE.Color(0xc4d6e4) }
+    },
+    vertexShader:
+      'varying float h;' +
+      'void main() {' +
+      '  h = normalize(position).y;' +
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);' +
+      '}',
+    fragmentShader:
+      'uniform vec3 arriba; uniform vec3 abajo; varying float h;' +
+      'void main() {' +
+      '  gl_FragColor = vec4(mix(abajo, arriba, clamp(h * 1.4, 0.0, 1.0)), 1.0);' +
+      '}'
+  })
+);
+escena.add(cielo);
+
+for (let i = 0; i < 22; i++) {
+  const a = Math.random() * Math.PI * 2;
+  const r = 60 + Math.random() * 90;
+  const nube = new THREE.Group();
+  const n = 3 + Math.floor(Math.random() * 3);
+  for (let j = 0; j < n; j++) {
+    const c = new THREE.Mesh(
+      new THREE.BoxGeometry(9 + Math.random() * 12, 3.5, 7 + Math.random() * 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.82 })
+    );
+    c.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 12);
+    nube.add(c);
+  }
+  nube.position.set(Math.cos(a) * r, 42 + Math.random() * 26, Math.sin(a) * r);
+  escena.add(nube);
+}
+
+/* ── Luz ───────────────────────────────────────────────────────────────── */
 escena.add(new THREE.HemisphereLight(0xbfd4e6, 0x6b5a3e, 0.85));
 const sol = new THREE.DirectionalLight(0xfff0d4, 0.95);
 sol.position.set(-28, 34, 18);
@@ -127,14 +196,13 @@ escena.add(sol);
 
 /* ── Suelo ─────────────────────────────────────────────────────────────── */
 const suelo = new THREE.Mesh(
-  new THREE.PlaneGeometry(220, 220),
+  new THREE.PlaneGeometry(260, 260),
   new THREE.MeshLambertMaterial({ color: 0x6f8a4e })
 );
 suelo.rotation.x = -Math.PI / 2;
 suelo.receiveShadow = true;
 escena.add(suelo);
 
-// Plaza de tierra alrededor del Centro: marca la zona segura sin cartel.
 const plaza = new THREE.Mesh(
   new THREE.CircleGeometry(15, 40),
   new THREE.MeshLambertMaterial({ color: 0x8a7a5f })
@@ -144,44 +212,30 @@ plaza.position.y = 0.02;
 plaza.receiveShadow = true;
 escena.add(plaza);
 
-/* ── Herramientas de construcción ─────────────────────────────────────── */
 function caja(ancho, alto, largo, color, x, y, z) {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(ancho, alto, largo),
-    new THREE.MeshLambertMaterial({ color })
+    new THREE.MeshLambertMaterial({ color: color })
   );
   m.position.set(x, y + alto / 2, z);
-  m.castShadow = true;
-  m.receiveShadow = true;
+  m.castShadow = true; m.receiveShadow = true;
   escena.add(m);
   return m;
 }
 
-/* ── El Centro ─────────────────────────────────────────────────────────────
-   Es lo único que existe desde el día uno, así que es lo único que se ve
-   terminado: piedra clara, techo de tejas, puerta abierta. Todo lo demás
-   alrededor es tierra. Ese contraste es el juego. */
+/* ── El Centro ─────────────────────────────────────────────────────────── */
 caja(11, 5.5, 11, 0xe8d9a0, 0, 0, 0);
-caja(12.5, 0.7, 12.5, 0xb4543c, 0, 5.5, 0);          // techo
-caja(2.4, 3.4, 0.4, 0x4a3a26, 0, 0, 5.6);            // puerta
-[-3.4, 3.4].forEach(x => caja(1.6, 1.6, 0.3, 0x8fb8c9, x, 2.4, 5.6));  // ventanas
-// Mástil: el punto más alto del pueblo. Sirve para orientarse desde lejos.
+caja(12.5, 0.7, 12.5, 0xb4543c, 0, 5.5, 0);
+caja(2.4, 3.4, 0.4, 0x4a3a26, 0, 0, 5.6);
+[-3.4, 3.4].forEach(function (x) { caja(1.6, 1.6, 0.3, 0x8fb8c9, x, 2.4, 5.6); });
 caja(0.35, 9, 0.35, 0xd8cdb4, 0, 6.2, -4.2);
 caja(2.6, 1.5, 0.15, 0xb4543c, 1.4, 13.4, -4.2);
 
-/* ── Los lotes vacíos ──────────────────────────────────────────────────────
-   Ocho, en círculo. Cada uno con estacas en las esquinas: lo justo para que
-   se lea "acá se puede construir" y no "acá no hay nada". */
+/* ── Lotes vacíos ──────────────────────────────────────────────────────── */
 const LOTES = [];
-const NOMBRES = [
-  'Lote 1', 'Lote 2', 'Lote 3', 'Lote 4',
-  'Lote 5', 'Lote 6', 'Lote 7', 'Lote 8'
-];
-
 for (let i = 0; i < 8; i++) {
   const a = (i / 8) * Math.PI * 2;
-  const x = Math.cos(a) * 27;
-  const z = Math.sin(a) * 27;
+  const x = Math.cos(a) * 27, z = Math.sin(a) * 27;
 
   const piso = new THREE.Mesh(
     new THREE.PlaneGeometry(11, 11),
@@ -192,18 +246,12 @@ for (let i = 0; i < 8; i++) {
   piso.receiveShadow = true;
   escena.add(piso);
 
-  for (const [dx, dz] of [[-5, -5], [5, -5], [-5, 5], [5, 5]]) {
-    caja(0.3, 1.3, 0.3, 0x5c4a30, x + dx, 0, z + dz);
+  const esquinas = [[-5, -5], [5, -5], [-5, 5], [5, 5]];
+  for (let e = 0; e < esquinas.length; e++) {
+    caja(0.3, 1.3, 0.3, 0x5c4a30, x + esquinas[e][0], 0, z + esquinas[e][1]);
   }
+  LOTES.push({ x: x, z: z, nombre: 'Lote ' + (i + 1) });
 
-  LOTES.push({ x, z, nombre: NOMBRES[i] });
-}
-
-/* ── Caminos ───────────────────────────────────────────────────────────────
-   Del Centro a cada lote. En el juego real sólo existirían si el gobierno
-   invierte; acá están para que el espacio se lea. */
-for (let i = 0; i < 8; i++) {
-  const a = (i / 8) * Math.PI * 2;
   const camino = new THREE.Mesh(
     new THREE.PlaneGeometry(2.4, 14),
     new THREE.MeshLambertMaterial({ color: 0x9c8c6e })
@@ -215,26 +263,23 @@ for (let i = 0; i < 8; i++) {
   escena.add(camino);
 }
 
-/* ── Árboles, para que el mundo tenga borde ───────────────────────────── */
-for (let i = 0; i < 40; i++) {
+/* ── Árboles ───────────────────────────────────────────────────────────── */
+for (let i = 0; i < 48; i++) {
   const a = Math.random() * Math.PI * 2;
-  const r = 42 + Math.random() * 45;
+  const r = 42 + Math.random() * 50;
   const x = Math.cos(a) * r, z = Math.sin(a) * r;
   caja(0.9, 3.4, 0.9, 0x5b432a, x, 0, z);
   caja(3.4, 3.4, 3.4, 0x4a6b32 + Math.floor(Math.random() * 0x0a1005), x, 3.2, z);
 }
 
-/* ── El jugador ────────────────────────────────────────────────────────────
-   Un muñeco de cajas. Los brazos y piernas se mueven al caminar: cuatro
-   líneas de código que cambian por completo si el mundo se siente vivo o
-   si uno se desliza como un mueble. */
+/* ── El muñeco ─────────────────────────────────────────────────────────── */
 const jugador = new THREE.Group();
 escena.add(jugador);
 
 function parte(ancho, alto, largo, color, x, y, z) {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(ancho, alto, largo),
-    new THREE.MeshLambertMaterial({ color })
+    new THREE.MeshLambertMaterial({ color: color })
   );
   m.position.set(x, y, z);
   m.castShadow = true;
@@ -242,69 +287,116 @@ function parte(ancho, alto, largo, color, x, y, z) {
   return m;
 }
 
-parte(1.1, 1.4, 0.6, 0x2f6ea8, 0, 1.5, 0);                      // torso
-const cabeza = parte(0.85, 0.85, 0.85, 0xd9a678, 0, 2.6, 0);
-const brazoIzq = parte(0.34, 1.2, 0.34, 0xd9a678, -0.72, 1.6, 0);
-const brazoDer = parte(0.34, 1.2, 0.34, 0xd9a678, 0.72, 1.6, 0);
+parte(1.1, 1.4, 0.6, 0x2f6ea8, 0, 1.5, 0);
+const cabeza    = parte(0.85, 0.85, 0.85, 0xd9a678, 0, 2.6, 0);
+const brazoIzq  = parte(0.34, 1.2, 0.34, 0xd9a678, -0.72, 1.6, 0);
+const brazoDer  = parte(0.34, 1.2, 0.34, 0xd9a678, 0.72, 1.6, 0);
 const piernaIzq = parte(0.42, 1.2, 0.42, 0x39424f, -0.3, 0.4, 0);
 const piernaDer = parte(0.42, 1.2, 0.42, 0x39424f, 0.3, 0.4, 0);
+jugador.position.set(0, 0, 16);
 
-jugador.position.set(0, 0, 14);
+/* ═══════════════════════════════════════════════════════════════════════════
+   CÁMARA — orientación libre
 
-/* ── Controles ─────────────────────────────────────────────────────────── */
-const teclas = {};
-addEventListener('keydown', e => teclas[e.key.toLowerCase()] = true);
-addEventListener('keyup', e => teclas[e.key.toLowerCase()] = false);
+   `yaw` gira alrededor, `pitch` mira arriba y abajo. Los dos los maneja
+   únicamente el dedo derecho: caminar no los toca nunca. Esa es toda la
+   diferencia con la versión anterior.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let yaw = Math.PI;      // arranca mirando hacia el Centro
+let pitch = 0.22;
+const DISTANCIA = 9.5;
 
-// Palanca táctil: nace donde el dedo toca, en la mitad izquierda de la
-// pantalla. Una palanca fija en una esquina obliga a mirar el pulgar; ésta
-// deja mirar el pueblo, que es lo que interesa.
+// Casi vertical, pero nunca del todo: en los polos exactos la cámara pierde
+// la referencia de cuál lado es arriba y da un tirón feo.
+const PITCH_MIN = -1.35;   // mirando al cielo
+const PITCH_MAX = 1.35;    // mirando al piso
+
 const base = document.getElementById('base');
 const puno = document.getElementById('puno');
-let tocando = false, origenX = 0, origenY = 0, ejeX = 0, ejeY = 0, dedo = null;
-const RADIO = 52;
 
-addEventListener('touchstart', e => {
-  for (const t of e.changedTouches) {
-    if (t.clientX > innerWidth * 0.6) continue;   // derecha reservada
-    dedo = t.identifier; tocando = true;
-    origenX = t.clientX; origenY = t.clientY;
-    base.style.left = (origenX - 59) + 'px';
-    base.style.top = (origenY - 59) + 'px';
-    puno.style.left = (origenX - 26) + 'px';
-    puno.style.top = (origenY - 26) + 'px';
-    base.classList.add('on'); puno.classList.add('on');
-    break;
+/* Dos dedos a la vez, cada uno con su tarea, identificados por dónde
+   empezaron a tocar. Guardar el identificador de cada uno es lo que permite
+   caminar y mirar al mismo tiempo sin que se pisen. */
+let dedoMover = null, origenX = 0, origenY = 0, ejeX = 0, ejeY = 0;
+let dedoMirar = null, ultimoX = 0, ultimoY = 0;
+const RADIO = 50;
+const SENSIBILIDAD = 0.0055;
+
+function esZonaDeMover(x) { return x < innerWidth * 0.5; }
+
+addEventListener('touchstart', function (e) {
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    if (esZonaDeMover(t.clientX) && dedoMover === null) {
+      dedoMover = t.identifier;
+      origenX = t.clientX; origenY = t.clientY;
+      base.style.left = (origenX - 56) + 'px';
+      base.style.top = (origenY - 56) + 'px';
+      puno.style.left = (origenX - 24) + 'px';
+      puno.style.top = (origenY - 24) + 'px';
+      base.classList.add('on'); puno.classList.add('on');
+    } else if (!esZonaDeMover(t.clientX) && dedoMirar === null) {
+      dedoMirar = t.identifier;
+      ultimoX = t.clientX; ultimoY = t.clientY;
+    }
   }
 }, { passive: true });
 
-addEventListener('touchmove', e => {
-  if (!tocando) return;
-  for (const t of e.changedTouches) {
-    if (t.identifier !== dedo) continue;
-    let dx = t.clientX - origenX, dy = t.clientY - origenY;
-    const d = Math.hypot(dx, dy);
-    if (d > RADIO) { dx = dx / d * RADIO; dy = dy / d * RADIO; }
-    ejeX = dx / RADIO; ejeY = dy / RADIO;
-    puno.style.left = (origenX + dx - 26) + 'px';
-    puno.style.top = (origenY + dy - 26) + 'px';
+addEventListener('touchmove', function (e) {
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    if (t.identifier === dedoMover) {
+      let dx = t.clientX - origenX, dy = t.clientY - origenY;
+      const d = Math.hypot(dx, dy);
+      if (d > RADIO) { dx = dx / d * RADIO; dy = dy / d * RADIO; }
+      ejeX = dx / RADIO; ejeY = dy / RADIO;
+      puno.style.left = (origenX + dx - 24) + 'px';
+      puno.style.top = (origenY + dy - 24) + 'px';
+    } else if (t.identifier === dedoMirar) {
+      yaw -= (t.clientX - ultimoX) * SENSIBILIDAD;
+      pitch += (t.clientY - ultimoY) * SENSIBILIDAD;
+      pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch));
+      ultimoX = t.clientX; ultimoY = t.clientY;
+    }
   }
 }, { passive: true });
 
 function soltar(e) {
-  for (const t of e.changedTouches) {
-    if (t.identifier !== dedo) continue;
-    tocando = false; ejeX = 0; ejeY = 0; dedo = null;
-    base.classList.remove('on'); puno.classList.remove('on');
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    if (t.identifier === dedoMover) {
+      dedoMover = null; ejeX = 0; ejeY = 0;
+      base.classList.remove('on'); puno.classList.remove('on');
+    }
+    if (t.identifier === dedoMirar) dedoMirar = null;
   }
 }
 addEventListener('touchend', soltar, { passive: true });
 addEventListener('touchcancel', soltar, { passive: true });
 
+/* ── Controles de computadora ──────────────────────────────────────────── */
+const teclas = {};
+addEventListener('keydown', function (e) { teclas[e.key.toLowerCase()] = true; });
+addEventListener('keyup', function (e) { teclas[e.key.toLowerCase()] = false; });
+
+let arrastrando = false, ratonX = 0, ratonY = 0;
+render.domElement.addEventListener('mousedown', function (e) {
+  arrastrando = true; ratonX = e.clientX; ratonY = e.clientY;
+});
+addEventListener('mouseup', function () { arrastrando = false; });
+addEventListener('mousemove', function (e) {
+  if (!arrastrando) return;
+  yaw -= (e.clientX - ratonX) * SENSIBILIDAD;
+  pitch += (e.clientY - ratonY) * SENSIBILIDAD;
+  pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch));
+  ratonX = e.clientX; ratonY = e.clientY;
+});
+
 /* ── Bucle ─────────────────────────────────────────────────────────────── */
 const VELOCIDAD = 7.5;
-const LIMITE = 68;
-let paso = 0, rumbo = 0;
+const LIMITE = 76;
+let paso = 0;
+let rumbo = Math.PI;          // hacia dónde apunta el cuerpo
 let relojAnterior = performance.now();
 
 const aviso = document.getElementById('aviso');
@@ -318,32 +410,44 @@ function mostrarAviso(texto) {
   else aviso.classList.remove('visible');
 }
 
+const posCamara = new THREE.Vector3();
+
 function bucle(ahora) {
   requestAnimationFrame(bucle);
-  // Delta acotado: si la pestaña estuvo en segundo plano, un salto de varios
-  // segundos teletransportaría al jugador a través de medio mapa.
   const dt = Math.min((ahora - relojAnterior) / 1000, 0.05);
   relojAnterior = ahora;
 
-  let mx = ejeX, mz = ejeY;
-  if (teclas['a'] || teclas['arrowleft'])  mx -= 1;
-  if (teclas['d'] || teclas['arrowright']) mx += 1;
-  if (teclas['w'] || teclas['arrowup'])    mz -= 1;
-  if (teclas['s'] || teclas['arrowdown'])  mz += 1;
+  // Entrada: adelante/atrás y costados, en el sistema de la cámara.
+  let adelante = -ejeY;
+  let costado = ejeX;
+  if (teclas['w'] || teclas['arrowup']) adelante += 1;
+  if (teclas['s'] || teclas['arrowdown']) adelante -= 1;
+  if (teclas['a'] || teclas['arrowleft']) costado -= 1;
+  if (teclas['d'] || teclas['arrowright']) costado += 1;
 
-  const fuerza = Math.min(Math.hypot(mx, mz), 1);
+  const fuerza = Math.min(Math.hypot(adelante, costado), 1);
 
   if (fuerza > 0.06) {
-    const dir = Math.atan2(mx, mz);
-    jugador.position.x += Math.sin(dir) * VELOCIDAD * fuerza * dt;
-    jugador.position.z += Math.cos(dir) * VELOCIDAD * fuerza * dt;
+    // "Adelante" es hacia donde mira la cámara, no hacia donde apunta el
+    // cuerpo. Por eso ir hacia atrás no arrastra la cámara: sólo cambia la
+    // dirección del movimiento, y el cuerpo gira para acompañarla.
+    const frenteX = -Math.sin(yaw), frenteZ = -Math.cos(yaw);
+    const derX = -frenteZ, derZ = frenteX;
 
-    // Girar de a poco hacia el rumbo nuevo en vez de saltar: un muñeco que
-    // rota de golpe se ve como un objeto, no como alguien caminando.
-    let giro = dir - rumbo;
+    let dx = frenteX * adelante + derX * costado;
+    let dz = frenteZ * adelante + derZ * costado;
+    const largo = Math.hypot(dx, dz) || 1;
+    dx /= largo; dz /= largo;
+
+    jugador.position.x += dx * VELOCIDAD * fuerza * dt;
+    jugador.position.z += dz * VELOCIDAD * fuerza * dt;
+
+    // El cuerpo gira hacia donde camina, con retraso. La cámara ni se entera.
+    const objetivo = Math.atan2(dx, dz);
+    let giro = objetivo - rumbo;
     while (giro > Math.PI) giro -= Math.PI * 2;
     while (giro < -Math.PI) giro += Math.PI * 2;
-    rumbo += giro * Math.min(dt * 12, 1);
+    rumbo += giro * Math.min(dt * 11, 1);
     jugador.rotation.y = rumbo;
 
     paso += dt * 11 * fuerza;
@@ -354,24 +458,32 @@ function bucle(ahora) {
     piernaDer.rotation.x = balanceo;
     cabeza.position.y = 2.6 + Math.abs(Math.sin(paso)) * 0.045;
   } else {
-    // Volver al reposo suavemente, no de un tirón.
-    [brazoIzq, brazoDer, piernaIzq, piernaDer].forEach(p => p.rotation.x *= 0.85);
+    brazoIzq.rotation.x *= 0.85;
+    brazoDer.rotation.x *= 0.85;
+    piernaIzq.rotation.x *= 0.85;
+    piernaDer.rotation.x *= 0.85;
   }
 
   jugador.position.x = Math.max(-LIMITE, Math.min(LIMITE, jugador.position.x));
   jugador.position.z = Math.max(-LIMITE, Math.min(LIMITE, jugador.position.z));
 
-  // Cámara detrás y arriba, siguiendo con retraso. El retraso es lo que
-  // hace que el movimiento tenga peso.
-  const destino = new THREE.Vector3(
-    jugador.position.x - Math.sin(rumbo) * 11,
-    9.5,
-    jugador.position.z - Math.cos(rumbo) * 11
+  // Cámara en órbita: siempre a la misma distancia, en el ángulo que fijó el
+  // dedo derecho. Se queda quieta mientras el muñeco camina.
+  const cosP = Math.cos(pitch);
+  posCamara.set(
+    jugador.position.x + Math.sin(yaw) * cosP * DISTANCIA,
+    jugador.position.y + 2.4 + Math.sin(pitch) * DISTANCIA,
+    jugador.position.z + Math.cos(yaw) * cosP * DISTANCIA
   );
-  camara.position.lerp(destino, Math.min(dt * 4.5, 1));
-  camara.lookAt(jugador.position.x, 2.2, jugador.position.z);
+  // Nunca por debajo del suelo: mirando muy hacia arriba, la cámara baja
+  // tanto que se enterraría y se vería el mundo desde abajo.
+  if (posCamara.y < 0.8) posCamara.y = 0.8;
 
-  /* Dónde estoy: lo resuelve la distancia, no un disparador invisible. */
+  camara.position.lerp(posCamara, Math.min(dt * 14, 1));
+  camara.lookAt(jugador.position.x, jugador.position.y + 2.2, jugador.position.z);
+
+  cielo.position.copy(camara.position);
+
   const dCentro = Math.hypot(jugador.position.x, jugador.position.z);
   if (dCentro < 15) {
     lugar.textContent = 'El Centro · zona segura';
@@ -380,7 +492,8 @@ function bucle(ahora) {
       : '');
   } else {
     let cerca = null;
-    for (const lote of LOTES) {
+    for (let i = 0; i < LOTES.length; i++) {
+      const lote = LOTES[i];
       if (Math.hypot(jugador.position.x - lote.x, jugador.position.z - lote.z) < 7) {
         cerca = lote; break;
       }
@@ -398,11 +511,42 @@ function bucle(ahora) {
 }
 requestAnimationFrame(bucle);
 
-addEventListener('resize', () => {
+/* ── Entrar: pantalla completa y horizontal ───────────────────────────────
+   Las dos cosas sólo se permiten como respuesta directa a un toque, así que
+   viven acá y no al cargar la página. Y las dos pueden fallar según el
+   navegador —en iPhone, el bloqueo de orientación no existe— por eso ninguna
+   corta la ejecución: si no se puede, se juega igual y el cartel de "girá el
+   teléfono" se encarga del resto. */
+document.getElementById('jugar').addEventListener('click', function () {
+  document.getElementById('portada').classList.add('oculta');
+  document.body.classList.add('jugando');
+
+  const raiz = document.documentElement;
+  const pedirPantallaCompleta = raiz.requestFullscreen || raiz.webkitRequestFullscreen;
+  if (pedirPantallaCompleta) {
+    try {
+      const p = pedirPantallaCompleta.call(raiz);
+      if (p && p.catch) p.catch(function () {});
+    } catch (_) {}
+  }
+
+  if (screen.orientation && screen.orientation.lock) {
+    try {
+      const p = screen.orientation.lock('landscape');
+      if (p && p.catch) p.catch(function () {});
+    } catch (_) {}
+  }
+
+  setTimeout(ajustar, 200);
+});
+
+function ajustar() {
   camara.aspect = innerWidth / innerHeight;
   camara.updateProjectionMatrix();
   render.setSize(innerWidth, innerHeight);
-});
+}
+addEventListener('resize', ajustar);
+addEventListener('orientationchange', function () { setTimeout(ajustar, 250); });
 </script>
 </body>
 </html>
