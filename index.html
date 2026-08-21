@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Pueblo Cero — prototipo</title>
+<style>
+  /* El pueblo empieza vacío: la interfaz también. Nada de paneles, barras ni
+     medidores. Sólo lo imprescindible para caminar y leer dónde estás parado. */
+  :root {
+    --tierra: #8a7a5f;
+    --centro: #e8d9a0;
+    --tinta: #1b1710;
+    --papel: #f2ece0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: #0d0f10; }
+  body {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--papel);
+    touch-action: none;
+  }
+  canvas { display: block; }
+
+  /* Cartel de estado. Es el único texto permanente y dice sólo dos cosas:
+     dónde estás y cuánto tenés. */
+  #estado {
+    position: fixed; top: env(safe-area-inset-top, 0); left: 0; right: 0;
+    padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8);
+    pointer-events: none;
+  }
+  #lugar { opacity: .95 }
+  #plata { opacity: .75 }
+
+  /* Aviso contextual: aparece sólo cuando hay algo que hacer donde estás
+     parado. Una pantalla vacía es una invitación a caminar, no un error. */
+  #aviso {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(150px + env(safe-area-inset-bottom, 0));
+    background: rgba(15,13,10,.9);
+    border: 1px solid rgba(242,236,224,.25);
+    padding: 12px 18px; border-radius: 4px;
+    font-size: 13px; letter-spacing: .04em;
+    opacity: 0; transition: opacity .18s ease;
+    text-align: center; max-width: 82vw;
+  }
+  #aviso.visible { opacity: 1 }
+  #aviso b { color: var(--centro); font-weight: 600 }
+
+  /* Palanca táctil. Aparece donde tocás, en la mitad izquierda. */
+  #base, #puno {
+    position: fixed; border-radius: 50%; pointer-events: none;
+    opacity: 0; transition: opacity .15s ease;
+  }
+  #base { width: 118px; height: 118px; border: 2px solid rgba(242,236,224,.3) }
+  #puno { width: 52px; height: 52px; background: rgba(242,236,224,.85) }
+  #base.on, #puno.on { opacity: 1 }
+
+  #ayuda {
+    position: fixed; left: 0; right: 0;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0));
+    text-align: center; font-size: 11px; letter-spacing: .1em;
+    opacity: .4; text-transform: uppercase; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="estado">
+  <span id="lugar">El Centro</span>
+  <span id="plata">$0</span>
+</div>
+
+<div id="aviso"></div>
+<div id="base"></div>
+<div id="puno"></div>
+<div id="ayuda">Arrastrá para caminar · WASD en compu</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   PUEBLO CERO — prototipo mínimo
+
+   Qué hay acá: un mundo 3D por el que se camina, el Centro en el medio, y
+   ocho lotes vacíos alrededor. Nada más.
+
+   Qué NO hay, a propósito: economía, elecciones, robo, otros jugadores. Todo
+   eso es lógica de servidor y se construye después. Esto responde una sola
+   pregunta, que es la que hay que responder primero: ¿se siente bien caminar
+   por este pueblo, en un teléfono?
+
+   Los lotes vacíos son el argumento visual del juego entero. Un pueblo que
+   arranca con ocho terrenos baldíos alrededor de un comedor gratuito dice
+   solo de qué se trata, sin un tutorial.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const escena = new THREE.Scene();
+escena.background = new THREE.Color(0x9fb4c7);
+escena.fog = new THREE.Fog(0x9fb4c7, 40, 110);
+
+const camara = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 300);
+
+const render = new THREE.WebGLRenderer({ antialias: true });
+render.setSize(innerWidth, innerHeight);
+// Tope de 2: en un teléfono de mucha densidad, renderizar a 3x tira los
+// cuadros por segundo a la mitad sin que se note la diferencia.
+render.setPixelRatio(Math.min(devicePixelRatio, 2));
+render.shadowMap.enabled = true;
+render.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(render.domElement);
+
+/* ── Luz ──────────────────────────────────────────────────────────────────
+   Sol bajo y cálido, en vez de luz cenital. Las sombras largas son lo que
+   le da volumen a un mundo hecho de cajas; con el sol en el cenit, todo se
+   ve plano y de plástico. */
+escena.add(new THREE.HemisphereLight(0xbfd4e6, 0x6b5a3e, 0.85));
+const sol = new THREE.DirectionalLight(0xfff0d4, 0.95);
+sol.position.set(-28, 34, 18);
+sol.castShadow = true;
+sol.shadow.mapSize.set(2048, 2048);
+sol.shadow.camera.left = -60; sol.shadow.camera.right = 60;
+sol.shadow.camera.top = 60; sol.shadow.camera.bottom = -60;
+escena.add(sol);
+
+/* ── Suelo ─────────────────────────────────────────────────────────────── */
+const suelo = new THREE.Mesh(
+  new THREE.PlaneGeometry(220, 220),
+  new THREE.MeshLambertMaterial({ color: 0x6f8a4e })
+);
+suelo.rotation.x = -Math.PI / 2;
+suelo.receiveShadow = true;
+escena.add(suelo);
+
+// Plaza de tierra alrededor del Centro: marca la zona segura sin cartel.
+const plaza = new THREE.Mesh(
+  new THREE.CircleGeometry(15, 40),
+  new THREE.MeshLambertMaterial({ color: 0x8a7a5f })
+);
+plaza.rotation.x = -Math.PI / 2;
+plaza.position.y = 0.02;
+plaza.receiveShadow = true;
+escena.add(plaza);
+
+/* ── Herramientas de construcción ─────────────────────────────────────── */
+function caja(ancho, alto, largo, color, x, y, z) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(ancho, alto, largo),
+    new THREE.MeshLambertMaterial({ color })
+  );
+  m.position.set(x, y + alto / 2, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  escena.add(m);
+  return m;
+}
+
+/* ── El Centro ─────────────────────────────────────────────────────────────
+   Es lo único que existe desde el día uno, así que es lo único que se ve
+   terminado: piedra clara, techo de tejas, puerta abierta. Todo lo demás
+   alrededor es tierra. Ese contraste es el juego. */
+caja(11, 5.5, 11, 0xe8d9a0, 0, 0, 0);
+caja(12.5, 0.7, 12.5, 0xb4543c, 0, 5.5, 0);          // techo
+caja(2.4, 3.4, 0.4, 0x4a3a26, 0, 0, 5.6);            // puerta
+[-3.4, 3.4].forEach(x => caja(1.6, 1.6, 0.3, 0x8fb8c9, x, 2.4, 5.6));  // ventanas
+// Mástil: el punto más alto del pueblo. Sirve para orientarse desde lejos.
+caja(0.35, 9, 0.35, 0xd8cdb4, 0, 6.2, -4.2);
+caja(2.6, 1.5, 0.15, 0xb4543c, 1.4, 13.4, -4.2);
+
+/* ── Los lotes vacíos ──────────────────────────────────────────────────────
+   Ocho, en círculo. Cada uno con estacas en las esquinas: lo justo para que
+   se lea "acá se puede construir" y no "acá no hay nada". */
+const LOTES = [];
+const NOMBRES = [
+  'Lote 1', 'Lote 2', 'Lote 3', 'Lote 4',
+  'Lote 5', 'Lote 6', 'Lote 7', 'Lote 8'
+];
+
+for (let i = 0; i < 8; i++) {
+  const a = (i / 8) * Math.PI * 2;
+  const x = Math.cos(a) * 27;
+  const z = Math.sin(a) * 27;
+
+  const piso = new THREE.Mesh(
+    new THREE.PlaneGeometry(11, 11),
+    new THREE.MeshLambertMaterial({ color: 0x7d6b50 })
+  );
+  piso.rotation.x = -Math.PI / 2;
+  piso.position.set(x, 0.03, z);
+  piso.receiveShadow = true;
+  escena.add(piso);
+
+  for (const [dx, dz] of [[-5, -5], [5, -5], [-5, 5], [5, 5]]) {
+    caja(0.3, 1.3, 0.3, 0x5c4a30, x + dx, 0, z + dz);
+  }
+
+  LOTES.push({ x, z, nombre: NOMBRES[i] });
+}
+
+/* ── Caminos ───────────────────────────────────────────────────────────────
+   Del Centro a cada lote. En el juego real sólo existirían si el gobierno
+   invierte; acá están para que el espacio se lea. */
+for (let i = 0; i < 8; i++) {
+  const a = (i / 8) * Math.PI * 2;
+  const camino = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 14),
+    new THREE.MeshLambertMaterial({ color: 0x9c8c6e })
+  );
+  camino.rotation.x = -Math.PI / 2;
+  camino.rotation.z = -a;
+  camino.position.set(Math.cos(a) * 20, 0.025, Math.sin(a) * 20);
+  camino.receiveShadow = true;
+  escena.add(camino);
+}
+
+/* ── Árboles, para que el mundo tenga borde ───────────────────────────── */
+for (let i = 0; i < 40; i++) {
+  const a = Math.random() * Math.PI * 2;
+  const r = 42 + Math.random() * 45;
+  const x = Math.cos(a) * r, z = Math.sin(a) * r;
+  caja(0.9, 3.4, 0.9, 0x5b432a, x, 0, z);
+  caja(3.4, 3.4, 3.4, 0x4a6b32 + Math.floor(Math.random() * 0x0a1005), x, 3.2, z);
+}
+
+/* ── El jugador ────────────────────────────────────────────────────────────
+   Un muñeco de cajas. Los brazos y piernas se mueven al caminar: cuatro
+   líneas de código que cambian por completo si el mundo se siente vivo o
+   si uno se desliza como un mueble. */
+const jugador = new THREE.Group();
+escena.add(jugador);
+
+function parte(ancho, alto, largo, color, x, y, z) {
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(ancho, alto, largo),
+    new THREE.MeshLambertMaterial({ color })
+  );
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  jugador.add(m);
+  return m;
+}
+
+parte(1.1, 1.4, 0.6, 0x2f6ea8, 0, 1.5, 0);                      // torso
+const cabeza = parte(0.85, 0.85, 0.85, 0xd9a678, 0, 2.6, 0);
+const brazoIzq = parte(0.34, 1.2, 0.34, 0xd9a678, -0.72, 1.6, 0);
+const brazoDer = parte(0.34, 1.2, 0.34, 0xd9a678, 0.72, 1.6, 0);
+const piernaIzq = parte(0.42, 1.2, 0.42, 0x39424f, -0.3, 0.4, 0);
+const piernaDer = parte(0.42, 1.2, 0.42, 0x39424f, 0.3, 0.4, 0);
+
+jugador.position.set(0, 0, 14);
+
+/* ── Controles ─────────────────────────────────────────────────────────── */
+const teclas = {};
+addEventListener('keydown', e => teclas[e.key.toLowerCase()] = true);
+addEventListener('keyup', e => teclas[e.key.toLowerCase()] = false);
+
+// Palanca táctil: nace donde el dedo toca, en la mitad izquierda de la
+// pantalla. Una palanca fija en una esquina obliga a mirar el pulgar; ésta
+// deja mirar el pueblo, que es lo que interesa.
+const base = document.getElementById('base');
+const puno = document.getElementById('puno');
+let tocando = false, origenX = 0, origenY = 0, ejeX = 0, ejeY = 0, dedo = null;
+const RADIO = 52;
+
+addEventListener('touchstart', e => {
+  for (const t of e.changedTouches) {
+    if (t.clientX > innerWidth * 0.6) continue;   // derecha reservada
+    dedo = t.identifier; tocando = true;
+    origenX = t.clientX; origenY = t.clientY;
+    base.style.left = (origenX - 59) + 'px';
+    base.style.top = (origenY - 59) + 'px';
+    puno.style.left = (origenX - 26) + 'px';
+    puno.style.top = (origenY - 26) + 'px';
+    base.classList.add('on'); puno.classList.add('on');
+    break;
+  }
+}, { passive: true });
+
+addEventListener('touchmove', e => {
+  if (!tocando) return;
+  for (const t of e.changedTouches) {
+    if (t.identifier !== dedo) continue;
+    let dx = t.clientX - origenX, dy = t.clientY - origenY;
+    const d = Math.hypot(dx, dy);
+    if (d > RADIO) { dx = dx / d * RADIO; dy = dy / d * RADIO; }
+    ejeX = dx / RADIO; ejeY = dy / RADIO;
+    puno.style.left = (origenX + dx - 26) + 'px';
+    puno.style.top = (origenY + dy - 26) + 'px';
+  }
+}, { passive: true });
+
+function soltar(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier !== dedo) continue;
+    tocando = false; ejeX = 0; ejeY = 0; dedo = null;
+    base.classList.remove('on'); puno.classList.remove('on');
+  }
+}
+addEventListener('touchend', soltar, { passive: true });
+addEventListener('touchcancel', soltar, { passive: true });
+
+/* ── Bucle ─────────────────────────────────────────────────────────────── */
+const VELOCIDAD = 7.5;
+const LIMITE = 68;
+let paso = 0, rumbo = 0;
+let relojAnterior = performance.now();
+
+const aviso = document.getElementById('aviso');
+const lugar = document.getElementById('lugar');
+let avisoActual = '';
+
+function mostrarAviso(texto) {
+  if (texto === avisoActual) return;
+  avisoActual = texto;
+  if (texto) { aviso.innerHTML = texto; aviso.classList.add('visible'); }
+  else aviso.classList.remove('visible');
+}
+
+function bucle(ahora) {
+  requestAnimationFrame(bucle);
+  // Delta acotado: si la pestaña estuvo en segundo plano, un salto de varios
+  // segundos teletransportaría al jugador a través de medio mapa.
+  const dt = Math.min((ahora - relojAnterior) / 1000, 0.05);
+  relojAnterior = ahora;
+
+  let mx = ejeX, mz = ejeY;
+  if (teclas['a'] || teclas['arrowleft'])  mx -= 1;
+  if (teclas['d'] || teclas['arrowright']) mx += 1;
+  if (teclas['w'] || teclas['arrowup'])    mz -= 1;
+  if (teclas['s'] || teclas['arrowdown'])  mz += 1;
+
+  const fuerza = Math.min(Math.hypot(mx, mz), 1);
+
+  if (fuerza > 0.06) {
+    const dir = Math.atan2(mx, mz);
+    jugador.position.x += Math.sin(dir) * VELOCIDAD * fuerza * dt;
+    jugador.position.z += Math.cos(dir) * VELOCIDAD * fuerza * dt;
+
+    // Girar de a poco hacia el rumbo nuevo en vez de saltar: un muñeco que
+    // rota de golpe se ve como un objeto, no como alguien caminando.
+    let giro = dir - rumbo;
+    while (giro > Math.PI) giro -= Math.PI * 2;
+    while (giro < -Math.PI) giro += Math.PI * 2;
+    rumbo += giro * Math.min(dt * 12, 1);
+    jugador.rotation.y = rumbo;
+
+    paso += dt * 11 * fuerza;
+    const balanceo = Math.sin(paso) * 0.55 * fuerza;
+    brazoIzq.rotation.x = balanceo;
+    brazoDer.rotation.x = -balanceo;
+    piernaIzq.rotation.x = -balanceo;
+    piernaDer.rotation.x = balanceo;
+    cabeza.position.y = 2.6 + Math.abs(Math.sin(paso)) * 0.045;
+  } else {
+    // Volver al reposo suavemente, no de un tirón.
+    [brazoIzq, brazoDer, piernaIzq, piernaDer].forEach(p => p.rotation.x *= 0.85);
+  }
+
+  jugador.position.x = Math.max(-LIMITE, Math.min(LIMITE, jugador.position.x));
+  jugador.position.z = Math.max(-LIMITE, Math.min(LIMITE, jugador.position.z));
+
+  // Cámara detrás y arriba, siguiendo con retraso. El retraso es lo que
+  // hace que el movimiento tenga peso.
+  const destino = new THREE.Vector3(
+    jugador.position.x - Math.sin(rumbo) * 11,
+    9.5,
+    jugador.position.z - Math.cos(rumbo) * 11
+  );
+  camara.position.lerp(destino, Math.min(dt * 4.5, 1));
+  camara.lookAt(jugador.position.x, 2.2, jugador.position.z);
+
+  /* Dónde estoy: lo resuelve la distancia, no un disparador invisible. */
+  const dCentro = Math.hypot(jugador.position.x, jugador.position.z);
+  if (dCentro < 15) {
+    lugar.textContent = 'El Centro · zona segura';
+    mostrarAviso(dCentro < 9
+      ? 'Comida y ropa <b>gratis</b>, siempre.<br>Acá nadie te puede robar.'
+      : '');
+  } else {
+    let cerca = null;
+    for (const lote of LOTES) {
+      if (Math.hypot(jugador.position.x - lote.x, jugador.position.z - lote.z) < 7) {
+        cerca = lote; break;
+      }
+    }
+    if (cerca) {
+      lugar.textContent = cerca.nombre + ' · vacío';
+      mostrarAviso('Terreno libre.<br>Acá se podrá <b>construir un negocio</b>.');
+    } else {
+      lugar.textContent = 'Pueblo Cero';
+      mostrarAviso('');
+    }
+  }
+
+  render.render(escena, camara);
+}
+requestAnimationFrame(bucle);
+
+addEventListener('resize', () => {
+  camara.aspect = innerWidth / innerHeight;
+  camara.updateProjectionMatrix();
+  render.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
